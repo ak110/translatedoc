@@ -1,1 +1,4 @@
-# doctrans
+# translatedoc
+
+PDFなどのドキュメントを翻訳するツール。
+

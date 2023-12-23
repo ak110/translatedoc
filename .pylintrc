@@ -1,0 +1,10 @@
+[MESSAGES CONTROL]
+disable=
+    broad-exception-caught,
+    fixme,
+    import-outside-toplevel,
+    logging-fstring-interpolation,
+    logging-not-lazy,
+
+[FORMAT]
+max-line-length=88
