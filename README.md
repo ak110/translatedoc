@@ -1,5 +1,9 @@
 # translatedoc
 
+[![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
+[![Lint&Test](https://github.com/ak110/translatedoc/actions/workflows/python-app.yml/badge.svg)](https://github.com/ak110/translatedoc/actions/workflows/python-app.yml)
+[![PyPI version](https://badge.fury.io/py/translatedoc.svg)](https://badge.fury.io/py/translatedoc)
+
 PDFなどのドキュメントを翻訳するツール。
 
 [Unstructured](https://unstructured.io/)で読み込み、OpenAI APIに渡しているだけ。
