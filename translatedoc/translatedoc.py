@@ -16,10 +16,21 @@ if typing.TYPE_CHECKING:
 def main():
     """メイン関数。"""
     parser = argparse.ArgumentParser()
-    parser.add_argument("input_files", nargs="+", help="input files")
-    parser.add_argument("--output", "-o", required=True, help="output file")
     parser.add_argument(
-        "--language", "-l", default="Japanese", help="language (default: Japanese)"
+        "--output-dir",
+        "-o",
+        default=pathlib.Path("."),
+        type=pathlib.Path,
+        help="output directory (default: .)",
+    )
+    parser.add_argument(
+        "--force", "-f", action="store_true", help="overwrite existing files"
+    )
+    parser.add_argument(
+        "--language",
+        "-l",
+        default="Japanese",
+        help="target language name (default: Japanese)",
     )
     parser.add_argument(
         "--model",
@@ -27,51 +38,94 @@ def main():
         default="gpt-3.5-turbo-1106",
         help="model (default: gpt-3.5-turbo-1106)",
     )
+    parser.add_argument(
+        "--strategy",
+        "-s",
+        choices=["auto", "fast", "ocr_only", "hi_res"],
+        default="hi_res",
+        help="document partitioning strategy (default: hi_res)",
+        # hi_resはtesseractやdetectron2を使うので重いけど精度が高いのでデフォルトに
+    )
+    parser.add_argument(
+        "--chunk-max-characters",
+        type=int,
+        default=4096,
+        help="document chunk size (default: 4096)",
+    )
+    parser.add_argument("input_files", nargs="+", help="input files/URLs")
     args = parser.parse_args()
 
-    if args.output == "-":
-        exit_code = _translatedoc(sys.stdout, args)
-    else:
-        output_file = pathlib.Path(args.output).absolute()
-        output_file.parent.mkdir(parents=True, exist_ok=True)
-        with output_file.open("w", encoding="utf-8") as file:
-            exit_code = _translatedoc(file, args)
+    openai_client = openai.OpenAI(base_url=os.environ.get("OPENAI_API_URL"))
+
+    exit_code = 0
+    for input_file in tqdm.tqdm(args.input_files, desc="Input files/URLs"):
+        input_path = pathlib.Path(input_file)
+        try:
+            # ドキュメントの読み込み・パース
+            chunks = _load_document(input_file, args)
+            source_name = input_path.with_suffix(".Source.txt").name
+            source_path = args.output_dir / source_name
+            if not _check_overwrite(source_path, args.force):
+                continue
+            source_path.parent.mkdir(parents=True, exist_ok=True)
+            source_path.write_text("\n\n".join(str(c).strip() for c in chunks) + "\n\n")
+
+            # 動作確認用: --language=noneで翻訳をスキップ
+            if args.language.lower() == "none":
+                continue
+
+            # 翻訳
+            output_name = input_path.with_suffix(f".{args.language}.txt").name
+            output_path = args.output_dir / output_name
+            if not _check_overwrite(output_path, args.force):
+                continue
+            output_path.parent.mkdir(parents=True, exist_ok=True)
+            with output_path.open("w") as file:
+                for chunk in tqdm.tqdm(chunks, desc="Chunks"):
+                    output_chunk = _translate(str(chunk), args, openai_client)
+                    file.write(output_chunk.strip() + "\n\n")
+                    file.flush()
+            tqdm.tqdm.write(f"{output_path} written.")
+        except Exception as e:
+            print(f"Error: {e} ({input_file})", file=sys.stderr)
+            exit_code = 1
 
     sys.exit(exit_code)
 
 
-def _translatedoc(file: typing.TextIO, args: argparse.Namespace) -> int:
-    """処理。"""
-    openai_client = openai.OpenAI(base_url=os.environ.get("OPENAI_API_URL"))
-
-    for input_file in tqdm.tqdm(args.input_files, desc="Input files"):
-        if len(args.input_files) > 1:
-            file.write(f"{'#' * 32} {input_file} {'#' * 32}\n")
-
-        try:
-            chunks = _load_document(input_file)
-            for chunk in tqdm.tqdm(chunks, desc="Chunks"):
-                output_chunk = _translate(str(chunk), args, openai_client)
-                file.write(output_chunk.strip() + "\n\n")
-                file.flush()
-        except Exception as e:
-            print(f"Error: {e} ({input_file})", file=sys.stderr)
-            return 1
-
-        file.write("\n")
-    return 0
+def _check_overwrite(output_path: pathlib.Path, force: bool) -> bool:
+    """上書き確認。"""
+    if output_path.exists() and not force:
+        with tqdm.tqdm.external_write_mode():
+            print(f"Output path already exists: {output_path}", file=sys.stderr)
+            try:
+                input_ = input("Overwrite? [y/N] ")
+            except EOFError:
+                input_ = ""
+            if input_ != "y":
+                print("Skipped.", file=sys.stderr)
+                return False
+    return True
 
 
-def _load_document(input_file: str) -> "list[Element]":
+def _load_document(input_file: str, args: argparse.Namespace) -> "list[Element]":
     """ドキュメントの読み込み・パース。"""
-    from unstructured.chunking.title import chunk_by_title
-    from unstructured.partition.auto import partition
+    with tqdm.tqdm.external_write_mode():
+        from unstructured.chunking.title import chunk_by_title
+        from unstructured.partition.auto import partition
 
-    if input_file.startswith("http://") or input_file.startswith("https://"):
-        elements = partition(url=input_file)
-    else:
-        elements = partition(filename=input_file)
-    chunks = chunk_by_title(elements, max_characters=4096)
+    kwargs = (
+        {"url": input_file}
+        if input_file.startswith("http://") or input_file.startswith("https://")
+        else {"filename": input_file}
+    )
+    elements = partition(**kwargs, strategy=args.strategy)
+    chunks = chunk_by_title(
+        elements,
+        combine_text_under_n_chars=args.chunk_max_characters // 4,
+        new_after_n_chars=args.chunk_max_characters // 2,
+        max_characters=args.chunk_max_characters,
+    )
     return chunks
 
 
@@ -85,13 +139,15 @@ def _translate(
             {
                 "role": "system",
                 "content": f"Translate the input into {args.language}."
-                " Do not output anything other than the translation result.",
+                " Do not output anything other than the translation result."
+                " Do not translate names of people, mathematical formulas, source code, URLs, etc.",
             },
             {"role": "user", "content": chunk},
         ],
         temperature=0.0,
     )
-    assert response.choices[0].message.content is not None
+    if len(response.choices) != 1 or response.choices[0].message.content is None:
+        return f"*** Unexpected response: {response.dict()=} ***"
     return response.choices[0].message.content
 
 
