@@ -140,7 +140,8 @@ def _translate(
                 "role": "system",
                 "content": f"Translate the input into {args.language}."
                 " Do not output anything other than the translation result."
-                " Do not translate names of people, mathematical formulas, source code, URLs, etc.",
+                " Do not translate names of people, mathematical formulas,"
+                " source code, URLs, etc.",
             },
             {"role": "user", "content": chunk},
         ],
