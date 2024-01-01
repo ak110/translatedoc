@@ -15,10 +15,11 @@ PDFなどのドキュメントを翻訳するツール。
 インストール例:
 
 ```bash
-sudo apt install poppler-utils poppler-data
-sudo apt install tesseract-ocr tesseract-ocr-jpn
-pip install unstructured[all-docs]
+sudo apt install poppler-utils poppler-data tesseract-ocr tesseract-ocr-jpn
+pip install unstructured[all-docs] --extra-index-url https://download.pytorch.org/whl/cu118
 ```
+
+`cu118`のところは環境に合わせて変更する。
 
 詳細は[Unstructuredのドキュメント](https://unstructured-io.github.io/unstructured/installing.html)を参照。
 

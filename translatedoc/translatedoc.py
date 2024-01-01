@@ -63,29 +63,30 @@ def main():
         try:
             # ドキュメントの読み込み・パース
             chunks = _load_document(input_file, args)
-            source_name = input_path.with_suffix(".Source.txt").name
-            source_path = args.output_dir / source_name
-            if not _check_overwrite(source_path, args.force):
-                continue
-            source_path.parent.mkdir(parents=True, exist_ok=True)
-            source_path.write_text("\n\n".join(str(c).strip() for c in chunks) + "\n\n")
+            source_path = args.output_dir / input_path.with_suffix(".Source.txt").name
+            if _check_overwrite(source_path, args.force):
+                source_path.parent.mkdir(parents=True, exist_ok=True)
+                source_path.write_text(
+                    "\n\n".join(str(c).strip() for c in chunks) + "\n\n"
+                )
+                tqdm.tqdm.write(f"{source_path} written.")
 
             # 動作確認用: --language=noneで翻訳をスキップ
             if args.language.lower() == "none":
                 continue
 
             # 翻訳
-            output_name = input_path.with_suffix(f".{args.language}.txt").name
-            output_path = args.output_dir / output_name
-            if not _check_overwrite(output_path, args.force):
-                continue
-            output_path.parent.mkdir(parents=True, exist_ok=True)
-            with output_path.open("w") as file:
-                for chunk in tqdm.tqdm(chunks, desc="Chunks"):
-                    output_chunk = _translate(str(chunk), args, openai_client)
-                    file.write(output_chunk.strip() + "\n\n")
-                    file.flush()
-            tqdm.tqdm.write(f"{output_path} written.")
+            output_path = (
+                args.output_dir / input_path.with_suffix(f".{args.language}.txt").name
+            )
+            if _check_overwrite(output_path, args.force):
+                output_path.parent.mkdir(parents=True, exist_ok=True)
+                with output_path.open("w") as file:
+                    for chunk in tqdm.tqdm(chunks, desc="Chunks"):
+                        output_chunk = _translate(str(chunk), args, openai_client)
+                        file.write(output_chunk.strip() + "\n\n")
+                        file.flush()
+                tqdm.tqdm.write(f"{output_path} written.")
         except Exception as e:
             print(f"Error: {e} ({input_file})", file=sys.stderr)
             exit_code = 1
@@ -148,7 +149,7 @@ def _translate(
         temperature=0.0,
     )
     if len(response.choices) != 1 or response.choices[0].message.content is None:
-        return f"*** Unexpected response: {response.dict()=} ***"
+        return f"*** Unexpected response: {response.model_dump()=} ***"
     return response.choices[0].message.content
 
 
