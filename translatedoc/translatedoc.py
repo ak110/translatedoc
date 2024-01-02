@@ -15,6 +15,10 @@ if typing.TYPE_CHECKING:
 
 def main():
     """メイン関数。"""
+    # timmのimport時にSegmentation Faultが起きることがあるようなのでとりあえず暫定対策
+    # https://github.com/invoke-ai/InvokeAI/issues/4041
+    os.environ["PYTORCH_JIT"] = "0"
+
     parser = argparse.ArgumentParser()
     parser.add_argument(
         "--output-dir",
