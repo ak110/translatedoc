@@ -53,8 +53,8 @@ def main():
     parser.add_argument(
         "--chunk-max-characters",
         type=int,
-        default=4096,
-        help="document chunk size (default: 4096)",
+        default=2000,
+        help="document chunk size (default: 2000)",
     )
     parser.add_argument("input_files", nargs="+", help="input files/URLs")
     args = parser.parse_args()
