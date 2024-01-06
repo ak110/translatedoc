@@ -79,6 +79,7 @@ def main():
         input_path = pathlib.Path(input_file)
         try:
             # ドキュメントの読み込み・パース
+            tqdm.tqdm.write(f"Loading {input_file}...")
             chunks = _load_document(input_file, args)
             source_path = args.output_dir / input_path.with_suffix(".Source.txt").name
             if _check_overwrite(source_path, args.force):
@@ -99,6 +100,7 @@ def main():
             if _check_overwrite(output_path, args.force):
                 output_path.parent.mkdir(parents=True, exist_ok=True)
                 with output_path.open("w") as file:
+                    tqdm.tqdm.write(f"Translating {input_file}...")
                     for chunk in tqdm.tqdm(chunks, desc="Chunks"):
                         output_chunk = _translate(str(chunk), args, openai_client)
                         file.write(output_chunk.strip() + "\n\n")
