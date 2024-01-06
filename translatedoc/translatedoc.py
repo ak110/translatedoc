@@ -37,11 +37,24 @@ def main():
         help="target language name (default: Japanese)",
     )
     parser.add_argument(
+        "--api-key",
+        "-k",
+        default=os.environ.get("OPENAI_API_KEY"),
+        help="OpenAI API key (default: OPENAI_API_KEY environment variable)",
+    )
+    parser.add_argument(
+        "--api-base",
+        "-b",
+        default=os.environ.get("OPENAI_API_URL"),
+        help="OpenAI API base URL (default: OPENAI_API_URL environment variable)",
+    )
+    parser.add_argument(
         "--model",
         "-m",
         default="gpt-3.5-turbo-1106",
         help="model (default: gpt-3.5-turbo-1106)",
     )
+
     parser.add_argument(
         "--strategy",
         "-s",
@@ -59,7 +72,7 @@ def main():
     parser.add_argument("input_files", nargs="+", help="input files/URLs")
     args = parser.parse_args()
 
-    openai_client = openai.OpenAI(base_url=os.environ.get("OPENAI_API_URL"))
+    openai_client = openai.OpenAI(api_key=args.api_key, base_url=args.api_base)
 
     exit_code = 0
     for input_file in tqdm.tqdm(args.input_files, desc="Input files/URLs"):
