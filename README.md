@@ -32,7 +32,6 @@ pip install translatedoc
 ## 使い方
 
 ```bash
-# export OPENAI_API_BASE=<your_api_base>  # default: https://api.openai.com/v1
 export OPENAI_API_KEY=<your_api_key>
 translatedoc --language=Japanese <input_files_and_or_urls>
 ```
@@ -40,3 +39,13 @@ translatedoc --language=Japanese <input_files_and_or_urls>
 カレントディレクトリに`ファイル名.Source.txt`と`ファイル名.Japanese.txt`が生成される。
 
 詳細は `translatedoc --help` を参照。
+
+## 環境変数
+
+| 環境変数名                     | 概要                                         | デフォルト値                |
+|--------------------------------|----------------------------------------------|-----------------------------|
+| `OPENAI_API_BASE`              | OpenAI APIのベースURL                        | `https://api.openai.com/v1` |
+| `OPENAI_API_KEY`               | OpenAI APIのキー                             | -                           |
+| `TRANSLATEDOC_MODEL`           | 翻訳に使用するモデル                         | `gpt-3.5-turbo-1106`        |
+| `TRANSLATEDOC_STRATEGY`        | ドキュメントのパーティション化に使用する戦略 | `hi_res`                    |
+| `TRANSLATEDOC_CHUNK_MAX_CHARS` | パーティション化の際の最大文字数             | `2000`                      |

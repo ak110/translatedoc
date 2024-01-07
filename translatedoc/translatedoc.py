@@ -51,7 +51,7 @@ def main():
     parser.add_argument(
         "--model",
         "-m",
-        default="gpt-3.5-turbo-1106",
+        default=os.environ.get("TRANSLATEDOC_MODEL", "gpt-3.5-turbo-1106"),
         help="model (default: gpt-3.5-turbo-1106)",
     )
 
@@ -59,14 +59,14 @@ def main():
         "--strategy",
         "-s",
         choices=["auto", "fast", "ocr_only", "hi_res"],
-        default="hi_res",
+        default=os.environ.get("TRANSLATEDOC_STRATEGY", "hi_res"),
         help="document partitioning strategy (default: hi_res)",
         # hi_resはtesseractやdetectron2を使うので重いけど精度が高いのでデフォルトに
     )
     parser.add_argument(
-        "--chunk-max-characters",
+        "--chunk-max-chars",
         type=int,
-        default=2000,
+        default=int(os.environ.get("TRANSLATEDOC_CHUNK_MAX_CHARS", "2000")),
         help="document chunk size (default: 2000)",
     )
     parser.add_argument("input_files", nargs="+", help="input files/URLs")
@@ -142,9 +142,9 @@ def _load_document(input_file: str, args: argparse.Namespace) -> "list[Element]"
     elements = partition(**kwargs, strategy=args.strategy)
     chunks = chunk_by_title(
         elements,
-        combine_text_under_n_chars=args.chunk_max_characters // 4,
-        new_after_n_chars=args.chunk_max_characters // 2,
-        max_characters=args.chunk_max_characters,
+        combine_text_under_n_chars=args.chunk_max_chars // 4,
+        new_after_n_chars=args.chunk_max_chars // 2,
+        max_characters=args.chunk_max_chars,
     )
     return chunks
 
