@@ -45,8 +45,8 @@ def main():
     parser.add_argument(
         "--api-base",
         "-b",
-        default=os.environ.get("OPENAI_API_URL"),
-        help="OpenAI API base URL (default: OPENAI_API_URL environment variable)",
+        default=os.environ.get("OPENAI_API_BASE"),
+        help="OpenAI API base URL (default: OPENAI_API_BASE environment variable)",
     )
     parser.add_argument(
         "--model",
