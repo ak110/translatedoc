@@ -19,7 +19,7 @@ enable = true
 style = "pep440"
 
 [tool.poetry.dependencies]
-python = ">=3.9,<4.0"
+python = ">=3.10,<4.0"
 markdownify = ">=0.11"
 openai = ">=1.10"
 tiktoken = ">=0.5"
@@ -40,7 +40,7 @@ requires = ["poetry-core>=1.0.0", "poetry-dynamic-versioning"]
 build-backend = "poetry_dynamic_versioning.backend"
 
 [tool.translatedoc]
-pyupgrade-args = ["--py39-plus"]
+pyupgrade-args = ["--py310-plus"]
 pylint-args = ["--jobs=4"]
 
 [tool.isort]
@@ -50,7 +50,7 @@ profile = "black"
 
 [tool.black]
 # https://black.readthedocs.io/en/stable/usage_and_configuration/the_basics.html
-target-version = ['py39']
+target-version = ['py310']
 skip-magic-trailing-comma = true
 
 [tool.flake8]
