@@ -8,6 +8,7 @@ import pathlib
 import sys
 
 import tqdm
+from markdownify import markdownify as md
 
 from translatedoc import utils
 
@@ -75,17 +76,36 @@ def extract_text(input_file: str | pathlib.Path, strategy: str = "auto"):
     # https://github.com/invoke-ai/InvokeAI/issues/4041
     os.environ["PYTORCH_JIT"] = "0"
 
-    with tqdm.tqdm.external_write_mode():
-        from unstructured.chunking.title import chunk_by_title
-        from unstructured.partition.auto import partition
-
     input_file = str(input_file)
     kwargs = (
         {"url": input_file}
         if input_file.startswith("http://") or input_file.startswith("https://")
         else {"filename": input_file}
     )
-    elements = partition(**kwargs, strategy=strategy)
+
+    with tqdm.tqdm.external_write_mode():
+        from unstructured.chunking.title import chunk_by_title
+        from unstructured.documents.elements import Text as TextElement
+        from unstructured.partition.auto import partition
+
+        elements = partition(
+            **kwargs,
+            strategy=strategy,
+            skip_infer_table_types=[],
+            pdf_infer_table_structure=True,
+        )
+
+    # テーブルをTextElement化
+    for i, el in enumerate(elements):
+        if (
+            el is not None
+            and el.category == "Table"
+            and el.metadata is not None
+            and el.metadata.text_as_html is not None
+        ):
+            elements[i] = TextElement(
+                text=md(el.metadata.text_as_html.strip()), metadata={}
+            )
     chunks = chunk_by_title(elements)
 
     return "\n\n".join(str(c).strip() for c in chunks) + "\n"
