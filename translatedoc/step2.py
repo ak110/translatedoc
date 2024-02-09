@@ -108,59 +108,53 @@ def partition(text: str, model: str, max_chunk_size: int | None = None) -> list[
 
     encoding = tiktoken.encoding_for_model(model)
 
+    def count_tokens(x: str) -> int:
+        return len(encoding.encode(x))
+
     # 基本は改行2つ以上で区切る
     base_parts = re.split(r"\n\n+", text)
 
     # max_chunk_sizeを超えないトークン数ずつチャンクにしていく
-    chunks: list[tuple[str, int]] = []
+    chunks: list[str] = []
     for base_part in base_parts:
-        base_part_tokens = len(encoding.encode(base_part))
-        if base_part_tokens <= max_chunk_size:
+        if count_tokens(base_part) <= max_chunk_size:
             # max_chunk_size以下ならそのまま追加
-            chunks.append((base_part, base_part_tokens))
+            chunks.append(base_part)
         else:
             # base_partを更に分割
             chunk = ""
-            chunk_tokens = 0
-            for part, part_tokens in zip(
-                *_sub_partition(base_part, max_chunk_size, encoding), strict=True
-            ):
+            for part in _sub_partition(base_part, max_chunk_size, count_tokens):
                 # 今回のpartを追加するとチャンクサイズを超える場合、いったんそこで区切る
-                if chunk_tokens + part_tokens > max_chunk_size:
-                    assert chunk != "" and chunk_tokens > 0
-                    chunks.append((chunk, chunk_tokens))
-                    chunk, chunk_tokens = "", 0
+                if count_tokens(chunk + part) > max_chunk_size:
+                    assert chunk != ""
+                    chunks.append(chunk)
+                    chunk = ""
                 # チャンクに追加する
                 chunk += part
-                chunk_tokens += part_tokens
             if chunk != "":
-                chunks.append((chunk, chunk_tokens))
+                chunks.append(chunk)
 
-    return _merge_chunks(chunks, max_chunk_size, encoding)
+    return _merge_chunks(chunks, max_chunk_size, count_tokens)
 
 
 def _merge_chunks(
-    chunks: list[tuple[str, int]], max_chunk_size: int, encoding: tiktoken.Encoding
+    chunks: list[str], max_chunk_size: int, count_tokens: typing.Callable[[str], int]
 ) -> list[str]:
     """複数のチャンクを結合してもmax_chunk_size以下なところは結合していく。"""
     chunk_sep = "\n\n"
-    chunk_sep_tokens = len(encoding.encode(chunk_sep))
 
     combined_chunks: list[str] = []
     combined_chunk = ""
-    combined_chunk_tokens = 0
-    for chunk, chunk_tokens in chunks:
+    for chunk in chunks:
         # 今回のpartを追加するとチャンクサイズを超える場合、いったんそこで区切る
-        if combined_chunk_tokens + chunk_sep_tokens + chunk_tokens > max_chunk_size:
-            assert combined_chunk != "" and combined_chunk_tokens > 0
+        if count_tokens(combined_chunk + chunk_sep + chunk) > max_chunk_size:
+            assert combined_chunk != ""
             combined_chunks.append(combined_chunk)
-            combined_chunk, combined_chunk_tokens = "", 0
+            combined_chunk = ""
         # combined_chunkに追加する (セパレーター付き)
         if combined_chunk != "":
             combined_chunk += chunk_sep
-            combined_chunk_tokens += chunk_sep_tokens
         combined_chunk += chunk
-        combined_chunk_tokens += chunk_tokens
 
     # 最後のチャンク
     if combined_chunk != "":
@@ -170,61 +164,64 @@ def _merge_chunks(
 
 
 def _sub_partition(
-    text: str, max_chunk_size: int, encoding: tiktoken.Encoding, separator="\n"
-) -> tuple[list[str], list[int]]:
+    text: str,
+    max_chunk_size: int,
+    count_tokens: typing.Callable[[str], int],
+    separator="\n",
+) -> list[str]:
     """textをmax_chunk_sizeを超えないサイズに分割していく。"""
     parts: list[str] = []
-    parts_tokens: list[int] = []
 
     # 基本は改行2つ以上で区切る
     # 改行区切りである程度分かれるならそれ単位
     # それでもだめならスペース区切り
     # 最終手段として区切りを考えず
     next_separator = {"\n": " ", " ": ""}[separator]
-    separator_token_count = len(encoding.encode(separator))
-
-    base_parts = list(_split_with_separator(text, separator))
 
     # separatorで分割して1つずつ見ていく
-    for part in base_parts:
+    for part in split_with_separator(text, separator):
         assert part != ""
-        encoded = encoding.encode(part)
-        part_tokens = len(encoded)
         # max_chunk_size以下ならOK
-        if part_tokens + separator_token_count <= max_chunk_size:
+        if count_tokens(part) <= max_chunk_size:
             parts.append(part)
-            parts_tokens.append(part_tokens)
             continue
-        # 超えてたら更に分割
+
+        # 超えてたらセパレーターを変えて再帰的に更に分割
         if next_separator != "":
-            sub_parts, sub_part_tokens = _sub_partition(
-                part, max_chunk_size, encoding, next_separator
+            sub_parts = _sub_partition(
+                part, max_chunk_size, count_tokens, next_separator
             )
             parts.extend(sub_parts)
-            parts_tokens.extend(sub_part_tokens)
             continue
-        # 最終手段、トークン単位でぶつ切り
-        for offset in range(0, len(encoded), max_chunk_size):
-            tokens = encoded[offset : offset + max_chunk_size]
-            parts.append(encoding.decode(tokens))
-            parts_tokens.append(len(tokens))
 
-    return parts, parts_tokens
+        # 最終手段、文字単位でぶつ切り
+        sub_part = ""
+        for c in part:
+            # 今回の文字を追加するとチャンクサイズを超える場合、いったんそこで区切る
+            if count_tokens(sub_part + c) > max_chunk_size:
+                parts.append(sub_part)
+                sub_part = ""
+            # 今回の文字を今の塊(sub_part)に追加
+            sub_part += c
+        if sub_part != "":
+            parts.append(sub_part)
+
+    return parts
 
 
-def _split_with_separator(
-    text: str, separator: str
-) -> typing.Generator[str, None, None]:
+def split_with_separator(text: str, separator: str) -> list[str]:
     """separatorで分割し、separatorを含めて返す。"""
+    splitted: list[str] = []
     index = 0
     while True:
         next_index = text.find(separator, index)
         if next_index == -1:
             break
         next_index += len(separator)
-        yield text[index:next_index]
+        splitted.append(text[index:next_index])
         index = next_index
-    yield text[index:]
+    splitted.append(text[index:])
+    return splitted
 
 
 def translate(

@@ -106,7 +106,9 @@ def extract_text(input_file: str | pathlib.Path, strategy: str = "auto"):
             elements[i] = TextElement(
                 text=md(el.metadata.text_as_html.strip()), metadata={}
             )
-    chunks = chunk_by_title(elements)
+    chunks = chunk_by_title(
+        elements, combine_text_under_n_chars=0, max_characters=128000
+    )
 
     return "\n\n".join(str(c).strip() for c in chunks) + "\n"
 
