@@ -57,8 +57,8 @@ def main():
     parser.add_argument(
         "--model",
         "-m",
-        default=os.environ.get("TRANSLATEDOC_MODEL", "gpt-3.5-turbo-1106"),
-        help="model (default: gpt-3.5-turbo-1106)",
+        default=os.environ.get("TRANSLATEDOC_MODEL", "gpt-3.5-turbo-0125"),
+        help="model (default: gpt-3.5-turbo-0125)",
     )
     parser.add_argument(
         "--strategy",
