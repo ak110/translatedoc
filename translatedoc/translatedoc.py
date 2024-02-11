@@ -17,10 +17,6 @@ logger = logging.getLogger(__name__)
 
 def main():
     """メイン関数。"""
-    # timmのimport時にSegmentation Faultが起きることがあるようなのでとりあえず暫定対策
-    # https://github.com/invoke-ai/InvokeAI/issues/4041
-    os.environ["PYTORCH_JIT"] = "0"
-
     logging.basicConfig(
         level=logging.INFO,
         format="[%(levelname)s] %(message)s",
