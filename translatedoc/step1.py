@@ -17,7 +17,11 @@ logger = logging.getLogger(__name__)
 
 def main():
     """メイン関数。"""
-    logging.basicConfig(level=logging.INFO, format="[%(levelname)s] %(message)s")
+    logging.basicConfig(
+        level=logging.INFO,
+        format="[%(levelname)s] %(message)s",
+        handlers=[utils.TqdmLoggingHandler()],
+    )
 
     parser = argparse.ArgumentParser(description="Extract text from documents.")
     parser.add_argument(

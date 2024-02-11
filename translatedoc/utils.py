@@ -1,5 +1,6 @@
 """ユーティリティ関数置き場。"""
 
+import logging
 import pathlib
 import sys
 
@@ -19,3 +20,11 @@ def check_overwrite(output_path: pathlib.Path, force: bool) -> bool:
                 print("Skipped.", file=sys.stderr)
                 return False
     return True
+
+
+class TqdmLoggingHandler(logging.StreamHandler):
+    """tqdm対応のStreamHandler。"""
+
+    def emit(self, record):
+        with tqdm.tqdm.external_write_mode(file=self.stream):
+            super().emit(record)
