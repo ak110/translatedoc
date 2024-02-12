@@ -17,4 +17,5 @@ def test_extract_text_markdown():
 
     """
     text = translatedoc.extract_text(TEST_DATA_DIR / "markdown.md")
-    assert text == (TEST_DATA_DIR / "markdown.Source.txt").read_text()
+    expected = (TEST_DATA_DIR / "markdown.Source.txt").read_text()
+    assert text == expected

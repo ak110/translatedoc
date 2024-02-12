@@ -22,6 +22,12 @@ def check_overwrite(output_path: pathlib.Path, force: bool) -> bool:
     return True
 
 
+def set_verbose(verbose: bool) -> None:
+    """ログレベルをDEBUGに設定する。"""
+    if verbose:
+        logging.getLogger("translatedoc").setLevel(logging.DEBUG)
+
+
 class TqdmLoggingHandler(logging.StreamHandler):
     """tqdm対応のStreamHandler。"""
 

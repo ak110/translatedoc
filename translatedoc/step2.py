@@ -66,8 +66,7 @@ def main():
         "input_files", nargs="+", type=pathlib.Path, help="input text files"
     )
     args = parser.parse_args()
-    if args.verbose:
-        logging.getLogger().setLevel(logging.DEBUG)
+    utils.set_verbose(args.verbose)
 
     openai_client = openai.OpenAI(api_key=args.api_key, base_url=args.api_base)
 
@@ -84,15 +83,15 @@ def main():
             if utils.check_overwrite(output_path, args.force):
                 output_path.parent.mkdir(parents=True, exist_ok=True)
                 with output_path.open("w") as file:
-                    tqdm.tqdm.write(f"Translating {input_path}...")
+                    logger.info(f"Translating {input_path}...")
                     chunks = partition(text, args.model)
                     for chunk in tqdm.tqdm(chunks, desc="Chunks"):
                         output_chunk = translate(
                             str(chunk), args.model, args.language, openai_client
                         )
-                        file.write(output_chunk.strip() + "\n\n")
+                        file.write(f"{output_chunk}\n\n")
                         file.flush()
-                tqdm.tqdm.write(f"{output_path} written.")
+                logger.info(f"{output_path} written.")
         except Exception as e:
             logger.error(f"{e} ({input_path})")
             exit_code = 1
@@ -108,7 +107,7 @@ def partition(text: str, model: str, max_chunk_size: int | None = None) -> list[
         max_tokens = max_tokens_from_model_name(model)
         logger.debug(f"{max_tokens=}")
         max_chunk_size = (max_tokens - system_prompt_tokens) // 4
-        max_chunk_size = min(max_chunk_size, 1500)  # 長すぎても抜けが多くなるっぽいので
+        max_chunk_size = min(max_chunk_size, 1000)  # 長すぎても抜けが多くなるっぽいので
         logger.debug(f"{max_chunk_size=}")
 
     encoding = tiktoken.encoding_for_model(model)
@@ -150,9 +149,15 @@ def _merge_chunks(
 
     combined_chunks: list[str] = []
     combined_chunk = ""
+    last_chunk = ""
     for chunk in chunks:
-        # 今回のpartを追加するとチャンクサイズを超える場合、いったんそこで区切る
-        if count_tokens(combined_chunk + chunk_sep + chunk) > max_chunk_size:
+        # 今回のチャンクを追加するとチャンクサイズを超える場合、いったんそこで区切る
+        # また、今回のチャンクが直前のチャンクより大幅に短い場合もタイトルの可能性があるので区切る
+        # (もうちょっと賢くしたい気もするがとりあえず)
+        if (
+            count_tokens(combined_chunk + chunk_sep + chunk) > max_chunk_size
+            or len(chunk) <= len(last_chunk) // 8
+        ):
             assert combined_chunk != ""
             combined_chunks.append(combined_chunk)
             combined_chunk = ""
@@ -160,6 +165,7 @@ def _merge_chunks(
         if combined_chunk != "":
             combined_chunk += chunk_sep
         combined_chunk += chunk
+        last_chunk = chunk
 
     # 最後のチャンク
     if combined_chunk != "":
@@ -233,23 +239,37 @@ def translate(
     chunk: str, model: str, language: str, openai_client: openai.OpenAI
 ) -> str:
     """翻訳。"""
+    chunk = chunk.strip()
+    logger.debug(f"Translating input:\n{chunk}\n\n")
     response = openai_client.chat.completions.create(
         model=model,
         messages=[
             {
                 "role": "system",
-                "content": f"Translate the input into {language}."
-                " Do not output anything other than the translation result."
-                " Do not translate names of people, mathematical formulas,"
-                " source code, URLs, etc.",
+                "content": f"Translate the all inputs into {language}.\n"
+                "Translate everything without omission.\n"
+                "Do not output anything other than the translation result.\n"
+                "Do not translate names of people, mathematical formulas,"
+                " source code, URLs, etc.\n",
             },
-            {"role": "user", "content": chunk},
+            {"role": "user", "content": f"```\n{chunk}\n```"},
         ],
         temperature=0.0,
     )
+    result: str
     if len(response.choices) != 1 or response.choices[0].message.content is None:
-        return f"*** Unexpected response: {response.model_dump()=} ***"
-    return response.choices[0].message.content
+        result = f"*** Unexpected response: {response.model_dump()=} ***"
+    else:
+        result = response.choices[0].message.content.strip()
+
+    if result.startswith("```\n"):
+        result = result[4:]
+    if result.endswith("\n```"):
+        result = result[:-4]
+    result = result.strip()
+
+    logger.debug(f"Translated output:\n{result}\n\n")
+    return result
 
 
 def max_tokens_from_model_name(model: str) -> int:

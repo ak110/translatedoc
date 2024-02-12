@@ -7,8 +7,8 @@ import os
 import pathlib
 import sys
 
+import markdownify
 import tqdm
-from markdownify import markdownify as md
 
 from translatedoc import utils
 
@@ -46,21 +46,20 @@ def main():
     parser.add_argument("--verbose", "-v", action="store_true", help="verbose mode")
     parser.add_argument("input_files", nargs="+", help="input files/URLs")
     args = parser.parse_args()
-    if args.verbose:
-        logging.getLogger().setLevel(logging.DEBUG)
+    utils.set_verbose(args.verbose)
 
     exit_code = 0
     for input_file in tqdm.tqdm(args.input_files, desc="Input files/URLs"):
         input_path = pathlib.Path(input_file)
         try:
             # テキスト抽出
-            tqdm.tqdm.write(f"Loading {input_file}...")
+            logger.info(f"Loading {input_file}...")
             text = extract_text(input_file, args.strategy)
             source_path = args.output_dir / input_path.with_suffix(".Source.txt").name
             if utils.check_overwrite(source_path, args.force):
                 source_path.parent.mkdir(parents=True, exist_ok=True)
                 source_path.write_text(text, encoding="utf-8")
-                tqdm.tqdm.write(f"{source_path} written.")
+                logger.info(f"{source_path} written.")
         except Exception as e:
             logger.error(f"{e} ({input_file})")
             exit_code = 1
@@ -80,13 +79,13 @@ def extract_text(input_file: str | pathlib.Path, strategy: str = "auto"):
     # https://github.com/invoke-ai/InvokeAI/issues/4041
     os.environ["PYTORCH_JIT"] = "0"
 
+    # unstructuredでテキスト抽出
     input_file = str(input_file)
     kwargs = (
         {"url": input_file}
         if input_file.startswith("http://") or input_file.startswith("https://")
         else {"filename": input_file}
     )
-
     with tqdm.tqdm.external_write_mode():
         from unstructured.chunking.title import chunk_by_title
         from unstructured.documents.elements import Text as TextElement
@@ -103,18 +102,22 @@ def extract_text(input_file: str | pathlib.Path, strategy: str = "auto"):
     for i, el in enumerate(elements):
         if (
             el is not None
-            and el.category == "Table"
             and el.metadata is not None
             and el.metadata.text_as_html is not None
         ):
-            elements[i] = TextElement(
-                text=md(el.metadata.text_as_html).strip(), metadata={}
-            )
+            markdown_text = markdownify.markdownify(el.metadata.text_as_html).strip()
+            elements[i] = TextElement(text=markdown_text, metadata={})
+
+    # タイトルで分割
     chunks = chunk_by_title(
         elements, combine_text_under_n_chars=0, max_characters=2**31 - 1
     )
+    chunks = [str(c).strip() for c in chunks]
+    if logger.isEnabledFor(logging.DEBUG):
+        for i, chunk in enumerate(chunks):
+            logger.debug(f"Chunk {i}/{len(chunks)}:\n{chunk}\n\n")
 
-    return "\n\n".join(str(c).strip() for c in chunks) + "\n"
+    return "\n\n".join(chunks) + "\n"
 
 
 if __name__ == "__main__":

@@ -80,8 +80,7 @@ def main():
         logger.warning(
             "--chunk-max-chars is obsoleted and will be removed in the future."
         )
-    if args.verbose:
-        logging.getLogger().setLevel(logging.DEBUG)
+    utils.set_verbose(args.verbose)
 
     openai_client = openai.OpenAI(api_key=args.api_key, base_url=args.api_base)
 
@@ -90,13 +89,13 @@ def main():
         input_path = pathlib.Path(input_file)
         try:
             # ドキュメントの読み込み・パース
-            tqdm.tqdm.write(f"Loading {input_file}...")
+            logger.info(f"Loading {input_file}...")
             text = extract_text(input_file, args.strategy)
             source_path = args.output_dir / input_path.with_suffix(".Source.txt").name
             if utils.check_overwrite(source_path, args.force):
                 source_path.parent.mkdir(parents=True, exist_ok=True)
                 source_path.write_text(text, encoding="utf-8")
-                tqdm.tqdm.write(f"{source_path} written.")
+                logger.info(f"{source_path} written.")
 
             # 動作確認用: --language=noneで翻訳をスキップ
             if args.language.lower() == "none":
@@ -109,7 +108,7 @@ def main():
             if utils.check_overwrite(output_path, args.force):
                 output_path.parent.mkdir(parents=True, exist_ok=True)
                 with output_path.open("w") as file:
-                    tqdm.tqdm.write(f"Translating {input_file}...")
+                    logger.info(f"Translating {input_file}...")
                     chunks = partition(text, args.model)
                     for chunk in tqdm.tqdm(chunks, desc="Chunks"):
                         output_chunk = translate(
@@ -117,7 +116,7 @@ def main():
                         )
                         file.write(output_chunk.strip() + "\n\n")
                         file.flush()
-                tqdm.tqdm.write(f"{output_path} written.")
+                logger.info(f"{output_path} written.")
         except Exception as e:
             logger.error(f"{e} ({input_file})")
             exit_code = 1
