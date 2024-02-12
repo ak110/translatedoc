@@ -55,3 +55,7 @@ def test_partition3():
     text = (TEST_DATA_DIR / "2402.04494.Source.txt").read_text(encoding="utf-8")
     chunks = translatedoc.partition(text, "gpt-3.5-turbo-0613")
     assert "".join(text.split("\n")) == "".join("".join(chunks).split("\n"))
+
+    text = (TEST_DATA_DIR / "2401.15422.Source.txt").read_text(encoding="utf-8")
+    chunks = translatedoc.partition(text, "gpt-3.5-turbo-0125")
+    assert "".join(text.split("\n")) == "".join("".join(chunks).split("\n"))

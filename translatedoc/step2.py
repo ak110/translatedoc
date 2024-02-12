@@ -108,6 +108,7 @@ def partition(text: str, model: str, max_chunk_size: int | None = None) -> list[
         max_tokens = max_tokens_from_model_name(model)
         logger.debug(f"{max_tokens=}")
         max_chunk_size = (max_tokens - system_prompt_tokens) // 4
+        max_chunk_size = min(max_chunk_size, 1500)  # 長すぎても抜けが多くなるっぽいので
         logger.debug(f"{max_chunk_size=}")
 
     encoding = tiktoken.encoding_for_model(model)
