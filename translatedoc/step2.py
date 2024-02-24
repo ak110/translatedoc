@@ -5,7 +5,6 @@ import argparse
 import logging
 import os
 import pathlib
-import re
 import sys
 import typing
 
@@ -14,6 +13,8 @@ import tiktoken
 import tqdm
 
 from translatedoc import utils
+
+from .step1 import regex_newline3
 
 logger = logging.getLogger(__name__)
 
@@ -115,8 +116,8 @@ def partition(text: str, model: str, max_chunk_size: int | None = None) -> list[
     def count_tokens(x: str) -> int:
         return len(encoding.encode(x))
 
-    # 基本は改行2つ以上で区切る
-    base_parts = re.split(r"\n\n+", text)
+    # 基本は改行3つ以上で区切る
+    base_parts = regex_newline3.split(text)
 
     # max_chunk_sizeを超えないトークン数ずつチャンクにしていく
     chunks: list[str] = []
@@ -145,7 +146,7 @@ def _merge_chunks(
     chunks: list[str], max_chunk_size: int, count_tokens: typing.Callable[[str], int]
 ) -> list[str]:
     """複数のチャンクを結合してもmax_chunk_size以下なところは結合していく。"""
-    chunk_sep = "\n\n"
+    chunk_sep = "\n\n\n"
 
     combined_chunks: list[str] = []
     combined_chunk = ""
@@ -178,7 +179,7 @@ def _sub_partition(
     text: str,
     max_chunk_size: int,
     count_tokens: typing.Callable[[str], int],
-    separator="\n",
+    separator="\n\n",
 ) -> list[str]:
     """textをmax_chunk_sizeを超えないサイズに分割していく。"""
     parts: list[str] = []
@@ -187,7 +188,7 @@ def _sub_partition(
     # 改行区切りである程度分かれるならそれ単位
     # それでもだめならスペース区切り
     # 最終手段として区切りを考えず
-    next_separator = {"\n": " ", " ": ""}[separator]
+    next_separator = {"\n\n": "\n", "\n": " ", " ": ""}[separator]
 
     # separatorで分割して1つずつ見ていく
     for part in split_with_separator(text, separator):

@@ -19,14 +19,17 @@ def test_partition1():
     text = """
 a a a
 
+
 a a a
 
+
 a
+
 
 a
 """
     chunks = translatedoc.partition(text.strip(), "gpt-3.5-turbo", max_chunk_size=5)
-    assert chunks == ["a a a", "a a a\n\na", "a"], repr(chunks)
+    assert chunks == ["a a a", "a a a\n\n\na", "a"], repr(chunks)
 
 
 def test_partition2():
@@ -34,7 +37,9 @@ def test_partition2():
     text = """
 a a a
 
+
 b b b b b b
+
 
 とてもとても長いテキスト
 """

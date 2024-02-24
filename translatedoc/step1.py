@@ -5,6 +5,7 @@ import argparse
 import logging
 import os
 import pathlib
+import re
 import sys
 
 import markdownify
@@ -13,6 +14,8 @@ import tqdm
 from translatedoc import utils
 
 logger = logging.getLogger(__name__)
+
+regex_newline3 = re.compile(r"\n{3,}")
 
 
 def main():
@@ -98,6 +101,12 @@ def extract_text(input_file: str | pathlib.Path, strategy: str = "auto"):
             pdf_infer_table_structure=True,
         )
 
+    if logger.isEnabledFor(logging.DEBUG):
+        for i, el in enumerate(elements):
+            logger.debug(
+                f"Element[{i + 1}/{len(elements)}]: {el.__class__.__name__} ({el})"
+            )
+
     # テーブルをTextElement化
     for i, el in enumerate(elements):
         if (
@@ -113,11 +122,12 @@ def extract_text(input_file: str | pathlib.Path, strategy: str = "auto"):
         elements, combine_text_under_n_chars=0, max_characters=2**31 - 1
     )
     chunks = [str(c).strip() for c in chunks]
+    chunks = [regex_newline3.sub("\n\n", c) for c in chunks]
     if logger.isEnabledFor(logging.DEBUG):
         for i, chunk in enumerate(chunks):
-            logger.debug(f"Chunk {i}/{len(chunks)}:\n{chunk}\n\n")
+            logger.debug(f"Chunk[{i + 1}/{len(chunks)}]:\n{chunk}\n\n")
 
-    return "\n\n".join(chunks) + "\n"
+    return "\n\n\n".join(chunks) + "\n"
 
 
 if __name__ == "__main__":
