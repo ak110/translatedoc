@@ -1,7 +1,7 @@
 [tool.poetry]
 name = "translatedoc"
 version = "0.0.0"  # using poetry-dynamic-versioning
-description = "Python Formatters, Linters, and Testers Runner."
+description = "PDFなどのドキュメントを翻訳するツール。"
 license = "MIT"
 authors = ["aki. <mark@aur.ll.to>"]
 readme = "README.md"
@@ -11,7 +11,8 @@ classifiers = [
     "Intended Audience :: Developers",
     "Operating System :: OS Independent",
     "Programming Language :: Python :: 3 :: Only",
-    "Topic :: Software Development :: Quality Assurance",
+    "Topic :: Text Processing",
+    "Topic :: Utilities",
 ]
 
 [tool.poetry-dynamic-versioning]
@@ -29,7 +30,6 @@ unstructured = { version = ">=0.12", extras = ["md"] }  # テストコード用�
 
 [tool.poetry.group.dev.dependencies]
 pyfltr = ">=1.5"
-dill = "*"  # for pylint?
 
 [tool.poetry.scripts]
 translatedoc = "translatedoc.translatedoc:main"
