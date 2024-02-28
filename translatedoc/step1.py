@@ -45,6 +45,12 @@ def main():
         help="document partitioning strategy (default: hi_res)",
         # hi_resはtesseractやdetectron2を使うので重いけど精度が高いのでデフォルトに
     )
+    parser.add_argument(
+        "--all-elements",
+        "-a",
+        action="store_true",
+        help="output all elements (default: remove header/footer)",
+    )
 
     parser.add_argument("--verbose", "-v", action="store_true", help="verbose mode")
     parser.add_argument("input_files", nargs="+", help="input files/URLs")
@@ -57,7 +63,7 @@ def main():
         try:
             # テキスト抽出
             logger.info(f"Loading {input_file}...")
-            text = extract_text(input_file, args.strategy)
+            text = extract_text(input_file, args.strategy, args.all_elements)
             source_path = args.output_dir / input_path.with_suffix(".Source.txt").name
             if utils.check_overwrite(source_path, args.force):
                 source_path.parent.mkdir(parents=True, exist_ok=True)
@@ -70,7 +76,9 @@ def main():
     sys.exit(exit_code)
 
 
-def extract_text(input_file: str | pathlib.Path, strategy: str = "auto"):
+def extract_text(
+    input_file: str | pathlib.Path, strategy: str = "auto", all_elements: bool = False
+) -> str:
     """テキスト抽出。
 
     Args:
@@ -103,17 +111,15 @@ def extract_text(input_file: str | pathlib.Path, strategy: str = "auto"):
 
     if logger.isEnabledFor(logging.DEBUG):
         for i, el in enumerate(elements):
-            logger.debug(
-                f"Element[{i + 1}/{len(elements)}]: {el.__class__.__name__} ({el})"
-            )
+            logger.debug(f"Element[{i + 1}/{len(elements)}]: {el.category} ({el})")
+
+    # ヘッダ・フッタを削除
+    if not all_elements:
+        elements = [el for el in elements if el.category not in ("Header", "Footer")]
 
     # テーブルをTextElement化
     for i, el in enumerate(elements):
-        if (
-            el is not None
-            and el.metadata is not None
-            and el.metadata.text_as_html is not None
-        ):
+        if el.metadata is not None and el.metadata.text_as_html is not None:
             markdown_text = markdownify.markdownify(el.metadata.text_as_html).strip()
             elements[i] = TextElement(text=markdown_text, metadata={})
 

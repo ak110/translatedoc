@@ -69,9 +69,10 @@ def main():
         # hi_resはtesseractやdetectron2を使うので重いけど精度が高いのでデフォルトに
     )
     parser.add_argument(
-        "--chunk-max-chars",
-        default=os.environ.get("TRANSLATEDOC_CHUNK_MAX_CHARS", None),
-        help="obsoleted parameter",
+        "--all-elements",
+        "-a",
+        action="store_true",
+        help="output all elements (default: remove header/footer)",
     )
     parser.add_argument("--verbose", "-v", action="store_true", help="verbose mode")
     parser.add_argument("input_files", nargs="+", help="input files/URLs")
@@ -90,7 +91,7 @@ def main():
         try:
             # ドキュメントの読み込み・パース
             logger.info(f"Loading {input_file}...")
-            text = extract_text(input_file, args.strategy)
+            text = extract_text(input_file, args.strategy, args.all_elements)
             source_path = args.output_dir / input_path.with_suffix(".Source.txt").name
             if utils.check_overwrite(source_path, args.force):
                 source_path.parent.mkdir(parents=True, exist_ok=True)
