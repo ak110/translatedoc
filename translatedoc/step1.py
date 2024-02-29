@@ -2,6 +2,7 @@
 """テキスト抽出部分だけ切り出したもの。"""
 
 import argparse
+import importlib.metadata
 import logging
 import os
 import pathlib
@@ -53,8 +54,14 @@ def main():
     )
 
     parser.add_argument("--verbose", "-v", action="store_true", help="verbose mode")
-    parser.add_argument("input_files", nargs="+", help="input files/URLs")
+    parser.add_argument("input_files", nargs="*", help="input files/URLs")
+    parser.add_argument("--version", "-V", action="store_true", help="show version")
     args = parser.parse_args()
+    if args.version:
+        print(f"translatedoc {importlib.metadata.version('translatedoc')}")
+        sys.exit(0)
+    if len(args.input_files) == 0:
+        parser.error("at least one input file/URL is required")
     utils.set_verbose(args.verbose)
 
     exit_code = 0
@@ -113,7 +120,7 @@ def extract_text(
         for i, el in enumerate(elements):
             logger.debug(f"Element[{i + 1}/{len(elements)}]: {el.category} ({el})")
 
-    # ヘッダ・フッタを削除
+    # None, Image, Header, Footerを削除
     if not all_elements:
         elements = [el for el in elements if el.category not in ("Header", "Footer")]
 

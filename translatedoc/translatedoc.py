@@ -2,6 +2,7 @@
 """translatedoc - ドキュメントを翻訳するツール。"""
 
 import argparse
+import importlib.metadata
 import logging
 import os
 import pathlib
@@ -74,13 +75,16 @@ def main():
         action="store_true",
         help="output all elements (default: remove header/footer)",
     )
+
     parser.add_argument("--verbose", "-v", action="store_true", help="verbose mode")
-    parser.add_argument("input_files", nargs="+", help="input files/URLs")
+    parser.add_argument("input_files", nargs="*", help="input files/URLs")
+    parser.add_argument("--version", "-V", action="store_true", help="show version")
     args = parser.parse_args()
-    if args.chunk_max_chars is not None:
-        logger.warning(
-            "--chunk-max-chars is obsoleted and will be removed in the future."
-        )
+    if args.version:
+        print(f"translatedoc {importlib.metadata.version('translatedoc')}")
+        sys.exit(0)
+    if len(args.input_files) == 0:
+        parser.error("at least one input file/URL is required")
     utils.set_verbose(args.verbose)
 
     openai_client = openai.OpenAI(api_key=args.api_key, base_url=args.api_base)
@@ -89,7 +93,7 @@ def main():
     for input_file in tqdm.tqdm(args.input_files, desc="Input files/URLs"):
         input_path = pathlib.Path(input_file)
         try:
-            # ドキュメントの読み込み・パース
+            # テキスト抽出
             logger.info(f"Loading {input_file}...")
             text = extract_text(input_file, args.strategy, args.all_elements)
             source_path = args.output_dir / input_path.with_suffix(".Source.txt").name
@@ -115,7 +119,7 @@ def main():
                         output_chunk = translate(
                             str(chunk), args.model, args.language, openai_client
                         )
-                        file.write(output_chunk.strip() + "\n\n")
+                        file.write(f"{output_chunk}\n\n")
                         file.flush()
                 logger.info(f"{output_path} written.")
         except Exception as e:

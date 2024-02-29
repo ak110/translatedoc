@@ -2,6 +2,7 @@
 """翻訳処理部分だけ切り出したもの。"""
 
 import argparse
+import importlib.metadata
 import logging
 import os
 import pathlib
@@ -64,9 +65,15 @@ def main():
     )
     parser.add_argument("--verbose", "-v", action="store_true", help="verbose mode")
     parser.add_argument(
-        "input_files", nargs="+", type=pathlib.Path, help="input text files"
+        "input_files", nargs="*", help="input text files", type=pathlib.Path
     )
+    parser.add_argument("--version", "-V", action="store_true", help="show version")
     args = parser.parse_args()
+    if args.version:
+        print(f"translatedoc {importlib.metadata.version('translatedoc')}")
+        sys.exit(0)
+    if len(args.input_files) == 0:
+        parser.error("at least one input file is required")
     utils.set_verbose(args.verbose)
 
     openai_client = openai.OpenAI(api_key=args.api_key, base_url=args.api_base)
