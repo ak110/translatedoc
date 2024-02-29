@@ -121,8 +121,11 @@ def extract_text(
             logger.debug(f"Element[{i + 1}/{len(elements)}]: {el.category} ({el})")
 
     # None, Image, Header, Footerを削除
+    elements = [el for el in elements if el is not None]
     if not all_elements:
-        elements = [el for el in elements if el.category not in ("Header", "Footer")]
+        elements = [
+            el for el in elements if el.category not in ("Image", "Header", "Footer")
+        ]
 
     # テーブルをTextElement化
     for i, el in enumerate(elements):
