@@ -10,6 +10,7 @@ import sys
 import typing
 
 import openai
+import pytilpack.tqdm_
 import tiktoken
 import tqdm
 
@@ -25,7 +26,7 @@ def main():
     logging.basicConfig(
         level=logging.INFO,
         format="[%(levelname)s] %(message)s",
-        handlers=[utils.TqdmLoggingHandler()],
+        handlers=[pytilpack.tqdm_.TqdmStreamHandler()],
     )
 
     parser = argparse.ArgumentParser(description="Translate text file.")

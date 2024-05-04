@@ -9,6 +9,7 @@ import pathlib
 import sys
 
 import openai
+import pytilpack.tqdm_
 import tqdm
 
 from translatedoc import extract_text, partition, translate, utils
@@ -21,7 +22,7 @@ def main():
     logging.basicConfig(
         level=logging.INFO,
         format="[%(levelname)s] %(message)s",
-        handlers=[utils.TqdmLoggingHandler()],
+        handlers=[pytilpack.tqdm_.TqdmStreamHandler()],
     )
 
     parser = argparse.ArgumentParser(

@@ -10,6 +10,7 @@ import re
 import sys
 
 import markdownify
+import pytilpack.tqdm_
 import tqdm
 
 from translatedoc import utils
@@ -24,7 +25,7 @@ def main():
     logging.basicConfig(
         level=logging.INFO,
         format="[%(levelname)s] %(message)s",
-        handlers=[utils.TqdmLoggingHandler()],
+        handlers=[pytilpack.tqdm_.TqdmStreamHandler()],
     )
 
     parser = argparse.ArgumentParser(description="Extract text from documents.")

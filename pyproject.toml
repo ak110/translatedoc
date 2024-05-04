@@ -20,10 +20,11 @@ enable = true
 style = "pep440"
 
 [tool.poetry.dependencies]
-python = ">=3.10,<3.12"
+python = ">=3.11.0rc1,<3.12"  # unstructured: python<3.12
 markdownify = ">=0.11"
 openai = ">=1.10"
 pillow-heif = ">=0.15"  # workaround
+pytilpack = {version = ">=0.1"}
 tiktoken = ">=0.5"
 tqdm = "*"
 unstructured = { version = ">=0.12", extras = ["md"] }  # テストコード用にmd
@@ -40,7 +41,7 @@ translatedoc-step2 = "translatedoc.step2:main"
 requires = ["poetry-core>=1.0.0", "poetry-dynamic-versioning"]
 build-backend = "poetry_dynamic_versioning.backend"
 
-[tool.translatedoc]
+[tool.pyfltr]
 pyupgrade-args = ["--py310-plus"]
 pylint-args = ["--jobs=4"]
 

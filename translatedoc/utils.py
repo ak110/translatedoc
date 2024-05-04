@@ -26,11 +26,3 @@ def set_verbose(verbose: bool) -> None:
     """ログレベルをDEBUGに設定する。"""
     if verbose:
         logging.getLogger("translatedoc").setLevel(logging.DEBUG)
-
-
-class TqdmLoggingHandler(logging.StreamHandler):
-    """tqdm対応のStreamHandler。"""
-
-    def emit(self, record):
-        with tqdm.tqdm.external_write_mode(file=self.stream):
-            super().emit(record)
