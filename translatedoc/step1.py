@@ -8,6 +8,7 @@ import os
 import pathlib
 import re
 import sys
+import typing
 
 import markdownify
 import pytilpack.tqdm_
@@ -100,7 +101,7 @@ def extract_text(
 
     # unstructuredでテキスト抽出
     input_file = str(input_file)
-    kwargs = (
+    kwargs: typing.Mapping[str, typing.Any] = (
         {"url": input_file}
         if input_file.startswith("http://") or input_file.startswith("https://")
         else {"filename": input_file}
@@ -111,10 +112,10 @@ def extract_text(
         from unstructured.partition.auto import partition
 
         elements = partition(
-            **kwargs,
             strategy=strategy,
             skip_infer_table_types=[],
             pdf_infer_table_structure=True,
+            **kwargs,
         )
 
     if logger.isEnabledFor(logging.DEBUG):
@@ -132,7 +133,7 @@ def extract_text(
     for i, el in enumerate(elements):
         if el.metadata is not None and el.metadata.text_as_html is not None:
             markdown_text = markdownify.markdownify(el.metadata.text_as_html).strip()
-            elements[i] = TextElement(text=markdown_text, metadata={})
+            elements[i] = TextElement(text=markdown_text)
 
     # タイトルで分割
     chunks = chunk_by_title(

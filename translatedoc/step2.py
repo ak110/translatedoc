@@ -61,8 +61,8 @@ def main():
     parser.add_argument(
         "--model",
         "-m",
-        default=os.environ.get("TRANSLATEDOC_MODEL", "gpt-3.5-turbo-0125"),
-        help="model (default: gpt-3.5-turbo-0125)",
+        default=os.environ.get("TRANSLATEDOC_MODEL", "gpt-4o-mini"),
+        help="model (default: gpt-4o-mini)",
     )
     parser.add_argument("--verbose", "-v", action="store_true", help="verbose mode")
     parser.add_argument(
@@ -318,6 +318,14 @@ MODEL_MAX_TOKENS = {
     "gpt-4-1106-preview": 128000,
     "gpt-4-0125-preview": 128000,
     "gpt-4-vision-preview": 128000,
+    "gpt-4-turbo": 128000,
+    "gpt-4-turbo-2024-04-09": 128000,
+    "gpt-4o": 128000,
+    "gpt-4o-2024-05-13": 128000,
+    "gpt-4o-2024-08-06": 128000,
+    "gpt-4o-mini": 128000,
+    "gpt-4o-mini-2024-07-18": 128000,
+    "chatgpt-4o-latest": 128000,
 }
 
 if __name__ == "__main__":

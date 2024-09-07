@@ -77,5 +77,5 @@ translated = "\n\n".join(
 |--------------------------------|----------------------------------------------|-----------------------------|
 | `OPENAI_API_BASE`              | OpenAI APIのベースURL                        | `https://api.openai.com/v1` |
 | `OPENAI_API_KEY`               | OpenAI APIのキー                             | -                           |
-| `TRANSLATEDOC_MODEL`           | 翻訳に使用するモデル                         | `gpt-3.5-turbo-1106`        |
+| `TRANSLATEDOC_MODEL`           | 翻訳に使用するモデル                         | `gpt-4o-mini`               |
 | `TRANSLATEDOC_STRATEGY`        | ドキュメントのパーティション化に使用する戦略 | `hi_res`                    |
