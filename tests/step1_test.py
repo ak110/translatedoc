@@ -10,8 +10,7 @@ TEST_DATA_DIR = pathlib.Path(__file__).parent / "data"
 def test_extract_text_markdown():
     """テキスト抽出テストその1。
 
-    poetry install --no-interaction
-    poetry run translatedoc-step1 tests/data/markdown.md
+    uv run translatedoc-step1 tests/data/markdown.md
     cat markdown.Source.txt
     mv -f markdown.Source.txt tests/data/
 

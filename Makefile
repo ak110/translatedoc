@@ -3,14 +3,13 @@ help:
 	@cat Makefile
 
 update:
-	poetry update
+	uv sync --all-extras --dev
 	$(MAKE) test
 
-test:
-	poetry install --no-interaction
-	poetry run pyfltr --exit-zero-even-if-formatted
-
 format:
-	poetry run pyfltr --exit-zero-even-if-formatted --commands=fast
+	uv run pyfltr --exit-zero-even-if-formatted --commands=fast
 
-.PHONY: help update test format
+test:
+	uv run pyfltr --exit-zero-even-if-formatted
+
+.PHONY: help update format test

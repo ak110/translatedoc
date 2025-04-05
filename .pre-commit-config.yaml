@@ -20,13 +20,13 @@ repos:
       - id: mixed-line-ending
       - id: name-tests-test
       - id: trailing-whitespace
-        exclude: 'tests/data/.*'
+        exclude: "tests/data/.*"
 
   - repo: local
     hooks:
       - id: system
         name: pyfltr
-        entry: poetry run pyfltr --commands=fast
+        entry: uv run pyfltr --exit-zero-even-if-formatted --commands=fast
         types: [python]
         require_serial: true
         language: system

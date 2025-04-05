@@ -1,11 +1,11 @@
-[tool.poetry]
+[project]
 name = "translatedoc"
-version = "0.0.0"  # using poetry-dynamic-versioning
+dynamic = ["version"]
 description = "PDFなどのドキュメントを翻訳するツール。"
-license = "MIT"
-authors = ["aki. <mark@aur.ll.to>"]
+authors = [{ name = "aki.", email = "mark@aur.ll.to" }]
+requires-python = ">=3.10,<3.13"
 readme = "README.md"
-homepage = "https://github.com/ak110/translatedoc"
+license = "MIT"
 classifiers = [
     "Environment :: Console",
     "Intended Audience :: Developers",
@@ -14,32 +14,33 @@ classifiers = [
     "Topic :: Text Processing",
     "Topic :: Utilities",
 ]
+dependencies = [
+    "markdownify>=0.11",
+    "openai>=1.10",
+    "pillow-heif>=0.15",
+    "pytilpack>=0.2",
+    "tiktoken>=0.5",
+    "tqdm",
+    "unstructured[md]>=0.12",
+]
 
-[tool.poetry-dynamic-versioning]
-enable = true
-style = "pep440"
+[project.urls]
+Homepage = "https://github.com/ak110/translatedoc"
 
-[tool.poetry.dependencies]
-python = ">=3.10,<3.12"  # unstructured: python<3.12
-markdownify = ">=0.11"
-openai = ">=1.10"
-pillow-heif = ">=0.15"  # workaround
-pytilpack = ">=0.2"
-tiktoken = ">=0.5"
-tqdm = "*"
-unstructured = { version = ">=0.12", extras = ["md"] }  # テストコード用にmd
-
-[tool.poetry.group.dev.dependencies]
-pyfltr = ">=1.5"
-
-[tool.poetry.scripts]
+[project.scripts]
 translatedoc = "translatedoc.translatedoc:main"
 translatedoc-step1 = "translatedoc.step1:main"
 translatedoc-step2 = "translatedoc.step2:main"
 
+[dependency-groups]
+dev = ["pyfltr>=1.5"]
+
 [build-system]
-requires = ["poetry-core>=1.0.0", "poetry-dynamic-versioning"]
-build-backend = "poetry_dynamic_versioning.backend"
+requires = ["hatchling", "hatch-vcs"]
+build-backend = "hatchling.build"
+
+[tool.hatch.version]
+source = "vcs"
 
 [tool.pyfltr]
 pyupgrade-args = ["--py310-plus"]
