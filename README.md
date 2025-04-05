@@ -17,6 +17,7 @@ PDFなどのドキュメントを翻訳するツール。
 ```bash
 sudo apt install poppler-utils poppler-data tesseract-ocr tesseract-ocr-jpn
 pip install unstructured[all-docs] --extra-index-url https://download.pytorch.org/whl/cu118
+python -m nltk.downloader --exit-on-error punkt_tab averaged_perceptron_tagger_eng
 ```
 
 `cu118`のところは環境に合わせて変更する。

@@ -111,12 +111,7 @@ def extract_text(
         from unstructured.documents.elements import Text as TextElement
         from unstructured.partition.auto import partition
 
-        elements = partition(
-            strategy=strategy,
-            skip_infer_table_types=[],
-            pdf_infer_table_structure=True,
-            **kwargs,
-        )
+        elements = partition(strategy=strategy, skip_infer_table_types=[], **kwargs)
 
     if logger.isEnabledFor(logging.DEBUG):
         for i, el in enumerate(elements):
