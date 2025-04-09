@@ -3,7 +3,7 @@ name = "translatedoc"
 dynamic = ["version"]
 description = "PDFなどのドキュメントを翻訳するツール。"
 authors = [{ name = "aki.", email = "mark@aur.ll.to" }]
-requires-python = ">=3.10,<3.13"
+requires-python = ">=3.10,<4.0"
 readme = "README.md"
 license = "MIT"
 classifiers = [
